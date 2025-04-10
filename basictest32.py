@@ -1606,7 +1606,7 @@ def build_custom_validation_batch(tokenizer, seq_len=seq_len, device=device, bat
     target_tensor = torch.tensor(target_ids[:batch_size], device=device)
     return input_tensor, target_tensor
 
-def train_model(model, dataloader, optimizer, criterion, device):
+def train_model(batch_size, model, dataloader, optimizer, criterion, device):
     model.train()
     total_loss = 0
     n = 0
@@ -1617,7 +1617,6 @@ def train_model(model, dataloader, optimizer, criterion, device):
             src = src.to(device)
             target = target.to(device)
             decoder_input, target_labels = prepare_decoder_input_and_target(target)
-            batch_size, seq_length = src.size()
             optimizer.zero_grad()
             
             # 🔹 Get predictions & rule-modified embeddings
@@ -1664,15 +1663,10 @@ def train_model(model, dataloader, optimizer, criterion, device):
         val_input, val_target = build_custom_validation_batch(tokenizer, batch_size=batch_size, device=device)
         val_dec_input, val_target = prepare_decoder_input_and_target(val_target)
 
-
         output = model(val_input, val_dec_input)
-        # 🔹 Ensure `output` and `target_labels` have the same sequence length
-        seq_len = min(output.shape[1], target_labels.shape[1])  # Get the shorter sequence length
-        output = output[:, :seq_len, :]  # Truncate logits if too long
-        target_labels = target_labels[:, :seq_len]  # Truncate targets if too long
 
         # 🔹 Flatten for cross_entropy()
-        loss = criterion(output.reshape(-1, output.shape[-1]), target_labels.reshape(-1))
+        loss = criterion(output.reshape(-1, output.shape[-1]), val_target.reshape(-1))
         n+=1
         print(f"Iteration {n}, Loss: {loss.item()}")
         
@@ -2000,7 +1994,7 @@ def main():
     
     for epoch in range(1, args.epochs + 1):
         #avg_loss = train_model(model, dataloader, optimizer, criterion, device)
-        avg_loss = train_model(model, dataloader, optimizer, criterion, device)
+        avg_loss = train_model(args.batch_size, model, dataloader, optimizer, criterion, device)
 
         print(f"Epoch {epoch}/{args.epochs} - Loss: {avg_loss:.4f}")
 

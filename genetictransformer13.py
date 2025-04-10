@@ -3413,7 +3413,7 @@ class ReasoningModelGUI:
 
 
                                 # 🔹 Flatten for cross_entropy()
-                                loss = loss_fn(output.reshape(-1, output.shape[-1]), target_labels.reshape(-1))
+                                loss = loss_fn(output.reshape(-1, output.shape[-1]), val_target.reshape(-1))
                                 n+=1
                                 print(f"Iteration {n}, Loss: {loss.item()}")
                                 if torch.isnan(loss) or torch.isinf(loss):

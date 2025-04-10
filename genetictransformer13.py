@@ -3395,8 +3395,6 @@ class ReasoningModelGUI:
                                                         target_labels.reshape(-1)).item()
                                 #Test rules and generate new ones                          
                                 loss_diff = prev_loss - new_loss  # Negative means rule improved loss
-                                optimizer.step()
-                                optimizer.zero_grad()
 
                                 val_input, val_target = build_custom_validation_batch(tokenizer, batch_size=self.batch_size.get(), device=device)
                                 val_dec_input, val_target = prepare_decoder_input_and_target(val_target)

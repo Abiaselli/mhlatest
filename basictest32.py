@@ -1613,7 +1613,7 @@ def train_model(model, dataloader, optimizer, criterion, device):
 
     for batch_idx, (src, target) in enumerate(dataloader):
         loss_diff = 0
-        while loss_diff >= 0:
+        while loss_diff >= 0 and n%4 != 0:
             src = src.to(device)
             target = target.to(device)
             decoder_input, target_labels = prepare_decoder_input_and_target(target)

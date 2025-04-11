@@ -559,7 +559,7 @@ class Transformer_Model(nn.Module):
         self.encoder = nn.TransformerEncoderLayer(d_model=embedding_dim, dim_feedforward=embedding_dim, nhead=num_heads, activation="gelu", batch_first=True, device=device)
         self.encoder_layers = nn.TransformerEncoder(encoder_layer=self.encoder, num_layers=num_layers)
         self.decoder = nn.TransformerDecoderLayer(d_model=embedding_dim, dim_feedforward=embedding_dim, nhead=num_heads, activation="gelu", batch_first=True, device=device)
-        self.encoder_layers = nn.TransformerDecoder(decoder_layer=self.decoder, num_layers=num_layers)
+        self.decoder_layers = nn.TransformerDecoder(decoder_layer=self.decoder, num_layers=num_layers)
         self.tokenizer_wrapper = TokenizerWrapper(tokenizer, seq_len=seq_length, shift_decoder=False, device=device)
         self.tokenizer = tokenizer
         self.fc_out = nn.Linear(embedding_dim, vocab_size)
@@ -582,7 +582,7 @@ class Transformer_Model(nn.Module):
         src_pad_mask = (src == self.tokenizer.pad_token_id)
         src_emb = self.token_embedding(src)
         src_emb = self.pos_encoder(src_emb)
-        return self.encoder(src_emb, src_key_padding_mask=src_pad_mask)
+        return self.encoder_layers(src_emb, src_key_padding_mask=src_pad_mask)
 
     def decode_tgt(self, tgt_ids, memory):
         if tgt_ids.size(1) == 0:
@@ -594,7 +594,7 @@ class Transformer_Model(nn.Module):
         tgt_emb = self.token_embedding(tgt_ids)
         tgt_emb = self.pos_encoder(tgt_emb)
 
-        output = self.encoder_layers(
+        output = self.decoder_layers(
             tgt_emb, memory,
             tgt_mask=causal_mask,
             tgt_key_padding_mask=tgt_pad_mask,
@@ -622,7 +622,7 @@ class Transformer_Model(nn.Module):
 
         src_emb = self.token_embedding(src)
         src_emb = self.pos_encoder(src_emb)
-        memory = self.encoder(src_emb, src_key_padding_mask=src_pad_mask)
+        memory = self.encoder_layers(src_emb, src_key_padding_mask=src_pad_mask)
 
         if tgt_ids is None:
             tgt_ids = src[:, :1]  # dummy start
@@ -631,7 +631,7 @@ class Transformer_Model(nn.Module):
         tgt_emb = self.pos_encoder(tgt_emb)
         #print(f"💡 Embeddings: src {src_emb.shape}, tgt {tgt_emb.shape}")
 
-        output = self.encoder_layers(tgt_emb, memory, tgt_mask=causal_mask, tgt_key_padding_mask=tgt_pad_mask, memory_key_padding_mask=src_pad_mask)
+        output = self.decoder_layers(tgt_emb, memory, tgt_mask=causal_mask, tgt_key_padding_mask=tgt_pad_mask, memory_key_padding_mask=src_pad_mask)
 
         return self.fc_out(output)
 
